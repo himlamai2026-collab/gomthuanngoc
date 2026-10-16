@@ -196,6 +196,7 @@ strong{font-weight:500}
 .chan-cot .nhan{margin-bottom:6px}
 .chan-cot a{text-decoration:none;color:var(--phu)}
 .chan-cot a:hover{color:var(--muc)}
+.chan-dia{color:var(--phu);line-height:1.5}
 .chan-duoi{margin-top:64px;padding-top:24px;border-top:1px solid var(--ke-nhat);font-size:12px;color:var(--phu);letter-spacing:.04em}
 
 /* báo nhỏ */
