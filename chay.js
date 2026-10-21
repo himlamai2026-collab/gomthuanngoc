@@ -8,7 +8,7 @@
   }
 
   // Zalo không cho điền sẵn tin nhắn qua link, nên chép câu hỏi kèm mã món vào bộ nhớ rồi mở Zalo.
-  document.querySelectorAll('[data-zalo]').forEach(function (a) {
+  function ganZalo(a) {
     a.addEventListener('click', function (ev) {
       ev.preventDefault();
       var tin = a.getAttribute('data-tin') || '';
@@ -18,7 +18,47 @@
       };
       if (navigator.clipboard && tin) navigator.clipboard.writeText(tin).then(mo, mo); else mo();
     });
-  });
+  }
+  document.querySelectorAll('[data-zalo]').forEach(ganZalo);
+
+  // Trạng thái sống: đọc sổ kho online (chỉ mã + trạng thái) để món vừa giữ / vừa bán đổi ngay, không chờ dựng lại web.
+  var TEN = { con: 'Đang có', giu: 'Đang giữ', 'da-co-chu': 'Đã có chủ' };
+  function nhan(tt) { var s = document.createElement('span'); s.className = 'tt tt-' + tt; s.textContent = TEN[tt]; return s; }
+  function doiThe(a, tt) {
+    var cu = a.querySelector('.the-anh .tt');
+    if (cu) cu.remove();
+    if (tt !== 'con') a.querySelector('.the-anh').prepend(nhan(tt));
+    var gia = a.querySelector('.gia');
+    if (gia && tt === 'da-co-chu') { gia.className = 'gia gia-an'; gia.textContent = 'Đã có chủ'; }
+  }
+  function doiTrang(b, tt) {
+    var cu = b.querySelector('.mon-so .tt');
+    if (cu) cu.replaceWith(nhan(tt));
+    if (tt === 'con') return;   // giữ → còn: để lần dựng sau vẽ lại nút
+    var ma = b.getAttribute('data-ma'), cot = b.querySelector('.nut-cot');
+    var gia = b.querySelector('.gia');
+    if (gia && tt === 'da-co-chu') { gia.className = 'gia gia-an'; gia.textContent = 'Đã có chủ'; }
+    if (!cot) return;
+    cot.innerHTML = '';
+    var p = document.createElement('p'); p.className = 'da-ban';
+    p.textContent = tt === 'giu' ? 'Món đang được giữ cho một khách. Anh chị muốn được báo khi món trống lại thì nhắn kho.'
+      : 'Món này đã có chủ. Trang hồ sơ được giữ lại để tra cứu.';
+    var a = document.createElement('a'); a.className = 'nut-vien nut-rong'; a.href = '#'; a.setAttribute('data-zalo', '');
+    a.setAttribute('data-tin', tt === 'giu' ? 'Chào kho Gốm Thuần Ngọc, món ' + ma + ' trống lại thì báo em'
+      : 'Chào kho Gốm Thuần Ngọc, em muốn tìm món giống ' + ma);
+    a.textContent = tt === 'giu' ? 'Nhờ kho báo khi trống' : 'Hỏi món tương tự';
+    cot.append(p, a); ganZalo(a);
+  }
+  if (window.TT_URL && window.fetch && document.querySelector('[data-ma]')) {
+    fetch(window.TT_URL).then(function (r) { return r.json(); }).then(function (tt) {
+      document.querySelectorAll('[data-ma]').forEach(function (el) {
+        var moi = tt[el.getAttribute('data-ma')];
+        if (!moi || !TEN[moi] || moi === el.getAttribute('data-tt')) return;
+        el.setAttribute('data-tt', moi);
+        if (el.classList.contains('the')) doiThe(el, moi); else doiTrang(el, moi);
+      });
+    }).catch(function () {});   // sổ không trả lời thì giữ nguyên trạng thái lúc dựng
+  }
 
   // ray ảnh: đếm ảnh, ảnh nhỏ, link "xem ảnh 7"
   var ray = document.querySelector('.ray');
